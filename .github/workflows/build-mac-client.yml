@@ -25,9 +25,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: DMG file
-        path: rftool/target/installer/*.dmg
+        path: target/installer/*.dmg
     - name: Upload PKG
       uses: actions/upload-artifact@v2
       with:
         name: PKG file
-        path: rftool/target/installer/*.pkg
+        path: target/installer/*.pkg
