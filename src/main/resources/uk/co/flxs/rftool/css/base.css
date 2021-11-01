@@ -1,0 +1,12 @@
+.root {
+  -fx-background-image: url("../logo.png");
+  -fx-background-color: white;
+  -fx-background-repeat: no-repeat;
+  -fx-background-position: top left; }
+
+.primaryAction {
+  -fx-background-color: #bc1616;
+  -fx-color: #022d62;
+  -fx-font-size: 16pt; }
+  .primaryAction:hover {
+    -fx-background-color: #8e1111; }
