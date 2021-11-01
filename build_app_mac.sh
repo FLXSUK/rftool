@@ -10,7 +10,7 @@
 # APP_VERSION: the application version, e.g. 1.0.0, shown in "about" dialog
 
 JAVA_VERSION=17
-MAIN_JAR="main-ui-$PROJECT_VERSION.jar"
+MAIN_JAR="rftool-$PROJECT_VERSION.jar"
 
 # Set desired installer type: "dmg", "pkg".
 INSTALLER_TYPE=pkg
