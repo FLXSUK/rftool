@@ -89,7 +89,7 @@ call "%JAVA_HOME%\bin\jpackage" ^
   --main-jar %MAIN_JAR% ^
   --java-options -Xmx2048m ^
   --runtime-image target/java-runtime ^
-  --icon src/main/resources/uk/co/flxs/rftool/logo.png ^
+  --icon src/main/resources/uk/co/flxs/rftool/icon.ico ^
   --app-version %APP_VERSION% ^
   --vendor "FLXS" ^
   --copyright "Copyright © 2019-21 FLXS" ^
