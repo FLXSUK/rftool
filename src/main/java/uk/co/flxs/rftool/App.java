@@ -8,54 +8,54 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
  * JavaFX App
  */
-public class App extends Application
+public class App extends Application implements Initializable
 {
-    Label statusMessage;
-    Button btn;
+    @FXML
+    Button selectSource;
+    
+    @FXML
+    Button saveFile;
+    
+    @FXML
+    Label statusText;
+    
+    File sourceFile;
+    List<OrderItem> sourceList;
+    
+    File convertedFile;
+    Map<String, OrderItem> convertedList;
+    
+    Stage stage;
+    FileChooser fileChooser;
     
     @Override
-    public void start(Stage stage) {
-        var javaVersion = SystemInfo.javaVersion();
-        var javafxVersion = SystemInfo.javafxVersion();
+    public void start(Stage stage) throws Exception {
+        this.stage = stage;
+        
 
-        statusMessage = new Label("When you click the \"Convert File\" button below, fist select a source file, then a destination file and the conversion will be performed.");
-        statusMessage.wrapTextProperty().set(true);
-        
-        var fileChooser = new FileChooser();
-        
-        btn = new Button("Convert File...");
-        btn.getStyleClass().add("primaryAction");
-        btn.setOnAction( e -> {
-            btn.setText("Please wait...");
-            btn.setDisable(true);
-            
-            File source = fileChooser.showOpenDialog(stage);
-            File destination = fileChooser.showSaveDialog(stage);
-            convertCSVFile(source, destination);
-        });
-        
-        var root = new VBox(statusMessage, btn);
-        root.setAlignment(Pos.BOTTOM_CENTER);
-        root.setPadding(new Insets(10,10,10,10));
-        root.setSpacing(30);
-        
-        var scene = new Scene(root, 520, 260);
+        var scene = this.initScene();
         scene.getStylesheets().add(getClass()
              .getResource("css/base.css")
              .toExternalForm());
@@ -67,62 +67,121 @@ public class App extends Application
         launch();
     }
 
+    private Scene initScene() throws Exception
+    {
+        var logo = new Image(getClass().getResourceAsStream("logo.png"));
+        Parent root = this.loadFXML("order-data-convert.fxml");
+        var scene = new Scene(root, 640, 480);
+        return scene;
+    }
+    
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        this.fileChooser = new FileChooser();
+    }
+    
+    @FXML
+    private void onSelectSource() {
+        sourceFile = fileChooser.showOpenDialog(stage);
+        loadSource(sourceFile);
+    }
+    
+    @FXML
+    private void onSaveFile() {
+        var originalName = this.sourceFile.getName();
+        var lastDot = originalName.lastIndexOf(".");
+        var convertedName = 
+                originalName.substring(0, lastDot) + 
+                "_CONVERTED" + 
+                originalName.substring(lastDot);
+        fileChooser.setInitialDirectory(this.sourceFile.getParentFile());
+        fileChooser.setInitialFileName(convertedName);
+        convertedFile = fileChooser.showSaveDialog(stage);
+        saveConvertedFile(convertedFile);
+    }
+    
+    private static Parent loadFXML(String fxmlFilename) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxmlFilename));
+        return fxmlLoader.load();
+    }
+    
+    private void saveSuccess() {
+        saveFile.setDisable(true);
+        statusText.setText("Converted file saved successfully!");
+        statusText.setTextFill(Color.GREEN);
+    }
+    
     private void convertSuccess() {
-        btn.setDisable(false);
-        btn.setText("Convert File...");
-        statusMessage.setText("Converson completed!");
+        saveFile.setDisable(false);
+        statusText.setText("Source file loaded successfully!");
+        statusText.setTextFill(Color.BLUE);
     }
     
     private void convertFailed(String message) {
-        btn.setDisable(false);
-        btn.setText("Convert File...");
-        statusMessage.setText("Converson failed! \n" + message);
+        saveFile.setDisable(true);
+        statusText.setText("Conversion failed!\n(" + message + ")");
+        statusText.setTextFill(Color.RED);
     }
     
-    private void convertCSVFile(File inputFile, File outputFile) {
-        Map<String, Integer> totals = new HashMap<>();
-        Map<String, String> names = new HashMap<>();
-        
+    private void loadSource(File sourceFile) {
         try (
-                CSVReader reader = new CSVReader(new FileReader(inputFile));
-                CSVWriter writer = new CSVWriter(new FileWriter(outputFile))
-        ) {
+            CSVReader reader = new CSVReader(new FileReader(sourceFile));
+        ){
+            sourceList = new ArrayList<>();
             List<String[]> r = reader.readAll();
-            r.forEach(item -> {
+            r.forEach(row -> {
                 try {
-                    Integer total;
-                    if (totals.containsKey(item[0])) {
-                        total = totals.get(item[0]);
-                        total += Integer.parseInt(item[2]);
-                        totals.replace(item[0], total);
-                    } else {
-                        total = 0;
-                        total += Integer.parseInt(item[2]);
-                        totals.put(item[0], total);
-                        names.put(item[0], item[1]);
-                    }
-                } catch (Exception e) {}
+                    OrderItem item = new OrderItem(row[0], row[1], Integer.parseInt(row[2]));
+                    sourceList.add(item);
+                } catch (NumberFormatException e) {
+                    // Ignore rows where qty cannot be converted to an int.
+                }
             });
             
-            writer.writeNext(new String[]{"product_id","name","qty"});
-            for(String key : totals.keySet()) {
-                String[] row = new String[] {key, names.get(key), totals.get(key).toString()};
-                writer.writeNext(row);
-            }
+            rollUp();
             convertSuccess();
-            
         } catch (NullPointerException ex) {
-            ex.printStackTrace();
-            convertFailed(ex.getMessage());
+            convertFailed("No source file selected");
         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-            convertFailed(ex.getMessage());
+            convertFailed("Could not open source file");
         } catch (IOException ex) {
-            ex.printStackTrace();
-            convertFailed(ex.getMessage());
+            convertFailed("Failed to read selected source file");
         } catch (CsvException ex) {
-            ex.printStackTrace();
-            convertFailed(ex.getMessage());
+            convertFailed("Badly formatted CSV data in source file");
         }
     }
+    
+    private void rollUp() {
+        this.convertedList = new HashMap();
+        this.sourceList.forEach(item -> {
+            if (this.convertedList.containsKey(item.getSku())) {
+                this.convertedList.get(item.getSku()).increment(item.getQty());
+            } else {
+                this.convertedList.put(item.getSku(), new OrderItem(
+                        item.getSku(), 
+                        item.getName(), 
+                        item.getQty()));
+            }
+        });
+    }
+    
+    private void saveConvertedFile(File convertedFile) {
+        try (
+            CSVWriter writer = new CSVWriter(new FileWriter(convertedFile))
+        ) {
+            writer.writeNext(new String[]{"product_id","name","qty"});
+            this.convertedList.forEach((key, item) -> {
+                writer.writeNext(item.asRow());
+            });
+            saveSuccess();
+        } catch (NullPointerException ex) {
+            convertFailed("No output file selected");
+        } catch (FileNotFoundException ex) {
+            convertFailed("Could not open output file");
+        } catch (IOException ex) {
+            convertFailed("Failed to write to selected output file");
+        }
+    }
+
+
 }

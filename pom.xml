@@ -21,14 +21,48 @@
             <version>17.0.0.1</version>
         </dependency>
         <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>17.0.0.1</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>5.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-javafx</artifactId>
+            <version>12.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kordamp.ikonli</groupId>
+            <artifactId>ikonli-bootstrapicons-pack</artifactId>
+            <version>12.2.0</version>
         </dependency>
     </dependencies>
     
     <build>
         <plugins>
+<!--            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <executions>
+                    <execution>
+                        <id>Compile SCSS</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>sassc</executable>
+                            <commandlineArgs> src/main/resources/uk/co/flxs/rftool/scss/base.scss src/main/resources/uk/co/flxs/rftool/css/base.css</commandlineArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>-->
+                    
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -43,7 +77,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <release>17</release>
+                    <release>11</release>
                 </configuration>
             </plugin>
             
@@ -78,7 +112,9 @@
             <id>build-mac</id>
 
             <activation>
-                <os><family>mac</family></os>
+                <os>
+                    <family>mac</family>
+                </os>
             </activation>
 
             <build>
@@ -117,7 +153,9 @@
             <id>build-linux</id>
 
             <activation>
-                <os><family>linux</family></os>
+                <os>
+                    <family>linux</family>
+                </os>
             </activation>
 
             <build>
@@ -156,7 +194,9 @@
             <id>build-windows</id>
 
             <activation>
-                <os><family>windows</family></os>
+                <os>
+                    <family>windows</family>
+                </os>
             </activation>
 
             <build>
